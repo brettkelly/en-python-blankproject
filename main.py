@@ -59,7 +59,7 @@ def buildSharedNoteUrl(username, noteGuid, shareKey):
         print type(e)
         print e
         raise SystemExit
-    return "%s/%s/%s" % (userInfo.webApiUrlPrefix, noteGuid, shareKey)
+    return "%ssh/%s/%s" % (userInfo.webApiUrlPrefix, noteGuid, shareKey)
     
 
 authToken = "" # bypass the dev token prompt by populating this variable.
@@ -71,15 +71,21 @@ userStore = getUserStoreInstance(authToken)
 noteStore = getNoteStoreInstance(authToken, userStore)
 user = userStore.getUser(authToken)
 
+print "UserStore and NoteStore instances are created!"
+raw_input("Hit enter to create a notebook...")
+
 ##
 # You now have a ready-to-use Evernote client. Kaboom.
 ##
+name = "Fancy Notebook! %s" % str(time.time())
+print "Creating a new notebook called '%s'" % name
 
 ## Create a notebook
 notebook = Types.Notebook()
-notebook.name = "Fancy Notebook! %s" % str(time.time())
+notebook.name = name 
 notebook = noteStore.createNotebook(authToken, notebook)
 print "New notebook GUID: %s" % notebook.guid
+raw_input("Hit enter to create a new note in our notebook...")
 
 ## Create a note in the notebook 
 note = Types.Note()
@@ -91,6 +97,9 @@ note.content = content
 note.notebookGuid = notebook.guid
 note = noteStore.createNote(authToken, note)
 print "New note GUID: %s" % note.guid
+print
+print "Hit enter to add an image to our note AND share it..."
+raw_input("Create a file called ~/temp/image.png, then hit enter...")
 
 ## Add an image to the note
 
@@ -129,13 +138,11 @@ newContent += '<!DOCTYPE en-note SYSTEM "http://xml.evernote.com/pub/enml2.dtd">
 newContent += '<en-note>'
 newContent += 'This image is called: %s' % imgFileName
 newContent += '<br />'
-newContent += 'This image\'s hash value is %s' % hashHex
-newContent += '<br /></br />'
-newContent += '<en-media type="%s" hash="%s" />' % (resource.type, hashHex)
+newContent += 'The image hash value is %s' % hashHex
+newContent += '<br />'
+newContent += '<en-media type="%s" hash="%s"></en-media>' % (resource.type, hashHex)
 newContent += '<br />Have a nice day!'
 newContent += '</en-note>'
-
-print newContent
 
 note.content = newContent 
 
@@ -147,8 +154,10 @@ shareKey = noteStore.shareNote(authToken, note.guid)
 shareUrl = buildSharedNoteUrl(user.username, note.guid, shareKey)
 print "View the note in the browser at:"
 print shareUrl
-
-raise SystemExit
+print
+print "If that's not magic, I don't know what is!"
+print
+raw_input("Hit enter to see all of your notebooks...")
 
 ### Get all notebooks
 notebooks = noteStore.listNotebooks(authToken)
@@ -156,18 +165,19 @@ print "Here be ye notebooks!"
 print
 for nb in notebooks:
     print "%s - %s" % (nb.name, nb.guid)
+print
+raw_input("Hit enter to share the notebook we created earlier...")
 
-### Create a Saved Search
-search = Types.SavedSearch()
-search.query = "Hello"
-search.name = "Friendly Notes %s" % str(time.time())
-search = noteStore.createSearch(authToken, search)
-print "New saved search GUID: %s" % search.guid
+print
+email = raw_input("Enter a valid email address (make sure it's actually valid): ")
 
-### Share a notebook with somebody
+### Share the notebook with somebody
 sharedNotebook = Types.SharedNotebook()
 sharedNotebook.privilege = Types.SharedNotebookPrivilegeLevel.READ_NOTEBOOK
-sharedNotebook.email = 'bkelly@evernote.com'
+sharedNotebook.email = email 
 sharedNotebook.notebookGuid = notebook.guid
 sharedNotebook = noteStore.createSharedNotebook(authToken, sharedNotebook)
-print sharedNotebook.id
+
+print "Check your email, dummy!"
+
+raw_input("We're done here. Hit enter to exit.")
