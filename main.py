@@ -3,38 +3,9 @@
 # Copyright 2013 Brett Kelly
 # All rights reserved.
 
-import thrift.protocol.TBinaryProtocol as TBinaryProtocol
-import thrift.transport.THttpClient as THttpClient
-import evernote.edam.userstore.UserStore as UserStore
 import evernote.edam.userstore.constants as UserStoreConstants
-import evernote.edam.notestore.NoteStore as NoteStore
 import evernote.edam.type.ttypes as Types
-import evernote.edam.error.ttypes as Errors
-
-EN_HOST = "sandbox.evernote.com"
-EN_URL = "https://%s" % EN_HOST
-
-def getUserStoreInstance(authToken):
-	userStoreUri = "%s/edam/user" % EN_URL
-	userStoreHttpClient = THttpClient.THttpClient(userStoreUri)
-	userStoreProtocol = TBinaryProtocol.TBinaryProtocol(userStoreHttpClient)
-	userStore = UserStore.Client(userStoreProtocol)
-	print "Created UserStore.Client instance"
-	return userStore
-
-def getNoteStoreInstance(authToken, userStore):
-	try:
-		noteStoreUrl = userStore.getNoteStoreUrl(authToken)
-	except Errors.EDAMUserException, ue:
-		print "Error: your dev token is probably wrong; double-check it."
-		print ue
-		return None
-
-	noteStoreHttpClient = THttpClient.THttpClient(noteStoreUrl)
-	noteStoreProtocol = TBinaryProtocol.TBinaryProtocol(noteStoreHttpClient)
-	noteStore = NoteStore.Client(noteStoreProtocol)
-	print "Created NoteStore.Client instance"
-	return noteStore
+from evernote.api.client import EvernoteClient
 
 def getNonEmptyUserInput(prompt):
 	"Prompt the user for input, disallowing empty responses"
@@ -44,16 +15,21 @@ def getNonEmptyUserInput(prompt):
 	print "This can't be empty. Try again."
 	return getNonEmptyUserInput(prompt)
 
-authToken = "" # bypass the dev token prompt by populating this variable.
+auth_token = "" # set this to your dev token to avoid being prompted
 
-if not authToken:
-	authToken = getNonEmptyUserInput("Enter your dev token: ")
+if not auth_token:
+    auth_token = getNonEmptyUserInput("Enter your developer token: ")
 
-userStore = getUserStoreInstance(authToken)
-noteStore = getNoteStoreInstance(authToken, userStore)
+client = EvernoteClient(token=auth_token, sandbox=True)
+
+user_store = client.get_user_store()
+
+note_store = client.get_note_store()
 
 ##
 # You now have a ready-to-use Evernote client. Kaboom.
 ##
 
+nbs = note_store.listNotebooks()
 
+print len(nbs)
